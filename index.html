@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>exploraGO - Descubre países y planifica tus viajes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="contenedor nav-box">
+      <a href="#" class="logo" onclick="navegarA('inicio')">
+        <img src="logotipo.png" alt="exploraGO Logo" class="logo-img" />
+        <span class="logo-txt">Explora<span class="logo-go">Go</span></span>
+      </a>
+
+      <button class="btn-hamb" id="btn-hamb" aria-label="Abrir menú" onclick="alternarMenuMovil()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a id="nav-inicio" onclick="navegarA('inicio')" class="activo">Inicio</a></li>
+        <li><a id="nav-explorar" onclick="navegarA('explorar')">Explorar</a></li>
+        <li><a id="nav-favoritos" onclick="navegarA('favoritos')">Favoritos (<span id="cant-favs">0</span>)</a></li>
+        <li><a id="nav-planificador" onclick="navegarA('planificador')">Planificador</a></li>
+        <li><a id="nav-itinerarios" onclick="navegarA('itinerarios')">Mis Itinerarios</a></li>
+        <li><a id="nav-acerca" onclick="navegarA('acerca')">Acerca de</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="contenedor" style="margin-top: 1.5rem;">
+
+    <section id="vista-inicio" class="vista activo">
+      <div class="hero">
+        <h1>Descubre tu próximo destino en el mundo</h1>
+        <p>Explora países, consulta clima en tiempo real y organiza tus itinerarios de viaje con exploraGO.</p>
+        <div class="box-buscar">
+          <input type="text" id="busqueda-hero" placeholder="¿A dónde quieres ir? Ej. España, Japón..." onkeydown="detectarEnterHero(event)"/>
+          <button class="btn btn-primario" onclick="procesarBusquedaHero()">Buscar</button>
+        </div>
+      </div>
+
+      <h2 class="titulo-sec">Destinos Destacados</h2>
+      <div class="grid-paises" id="grid-destacados"></div>
+
+      <section class="como-funciona">
+        <h2 class="titulo-sec" style="text-align: center;">¿Cómo funciona exploraGO?</h2>
+        <div class="grid-pasos">
+          <div class="card-paso">
+            <div class="ico-paso">🌍</div>
+            <h3>1. Explora</h3>
+            <p style="color: var(--txt-gris); font-size: 0.9rem; margin-top: 0.5rem;">Filtra por continentes o regiones y consulta información geográfica completa.</p>
+          </div>
+          <div class="card-paso">
+            <div class="ico-paso">❤️</div>
+            <h3>2. Guarda</h3>
+            <p style="color: var(--txt-gris); font-size: 0.9rem; margin-top: 0.5rem;">Crea tu lista de deseos guardando tus países y destinos favoritos.</p>
+          </div>
+          <div class="card-paso">
+            <div class="ico-paso">📅</div>
+            <h3>3. Planifica</h3>
+            <p style="color: var(--txt-gris); font-size: 0.9rem; margin-top: 0.5rem;">Diseña múltiples itinerarios personalizados día por día y ajusta tu presupuesto.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="banner-cta">
+        <h2>¿Listo para tu próxima aventura?</h2>
+        <p style="margin: 0.5rem 0 1.5rem 0;">Comienza hoy mismo a organizar el viaje de tus sueños.</p>
+        <button class="btn btn-primario" onclick="navegarA('planificador')">Crear mi plan de viaje</button>
+      </div>
+    </section>
+
+    <section id="vista-explorar" class="vista">
+      <h2 class="titulo-sec">Explorar Destinos</h2>
+      <div class="box-filtros">
+        <input type="text" id="filtro-busqueda" class="input-ctrl" placeholder="Buscar por nombre o capital..." oninput="filtrarPaises()" />
+        <select id="filtro-region" class="input-ctrl" onchange="filtrarPaises()">
+          <option value="">Todas las Regiones</option>
+          <option value="Europa">Europa</option>
+          <option value="Asia">Asia</option>
+          <option value="América">América</option>
+          <option value="Oceanía">Oceanía</option>
+          <option value="África">África</option>
+        </select>
+      </div>
+
+      <div class="grid-paises" id="grid-explorar"></div>
+    </section>
+
+    <section id="vista-detalle" class="vista">
+      <button class="btn btn-secundario" style="margin-bottom: 1.5rem;" onclick="navegarA('explorar')">← Volver a Explorar</button>
+      <div id="detalle-pais"></div>
+    </section>
+
+    <section id="vista-favoritos" class="vista">
+      <h2 class="titulo-sec">Mis Destinos Favoritos</h2>
+      <div class="grid-paises" id="grid-favoritos"></div>
+    </section>
+
+    <section id="vista-planificador" class="vista">
+      <div class="box-planificador">
+        <h2 class="titulo-sec" style="text-align: center; margin-bottom: 1.5rem;">Planificar Nuevo Viaje</h2>
+        <form id="form-planificador" onsubmit="procesarCrearViaje(event)">
+          <div class="campo">
+            <label for="viaje-nombre">Nombre del Viaje</label>
+            <input type="text" id="viaje-nombre" class="input-ctrl" placeholder="Ej. Eurotrip Verano 2026" required />
+          </div>
+
+          <div class="campo">
+            <label for="viaje-destino">Destino Principal</label>
+            <div class="buscador-destino">
+              <input
+                type="text"
+                id="viaje-destino"
+                class="input-ctrl"
+                placeholder="Escribe para buscar un país..."
+                autocomplete="off"
+                required
+              />
+              <div id="lista-destinos" class="lista-destinos" hidden></div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="campo">
+              <label for="viaje-inicio">Fecha de Inicio</label>
+              <input type="date" id="viaje-inicio" class="input-ctrl" required />
+            </div>
+            <div class="campo">
+              <label for="viaje-fin">Fecha de Fin</label>
+              <input type="date" id="viaje-fin" class="input-ctrl" required />
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="campo">
+              <label for="viaje-viajeros">Número de Viajeros</label>
+              <input type="number" id="viaje-viajeros" class="input-ctrl" min="1" value="1" required />
+            </div>
+            <div class="campo">
+              <label for="viaje-presupuesto">Presupuesto (USD)</label>
+              <input type="number" id="viaje-presupuesto" class="input-ctrl" min="0" placeholder="Ej. 1500" required />
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="viaje-notas">Comentarios / Notas</label>
+            <textarea id="viaje-notas" class="input-ctrl" rows="3" placeholder="Reservas de vuelo, hoteles, objetivos de viaje..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primario" style="width: 100%; margin-top: 1rem;">Guardar e ir al Itinerario</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="vista-itinerarios" class="vista">
+      <div id="contenido-itinerarios"></div>
+    </section>
+
+    <section id="vista-acerca" class="vista">
+      <div class="box-planificador" style="max-width: 800px;">
+        <h2 class="titulo-sec">Sobre exploraGO</h2>
+        <p style="margin-bottom: 1rem; color: var(--txt-gris);">
+          <strong>exploraGO</strong> es una plataforma web integral diseñada para facilitar la búsqueda de destinos turísticos y la organización detallada de tus viajes.
+        </p>
+        <h3 style="margin: 1.5rem 0 0.5rem 0;">Funcionalidades Principales</h3>
+        <ul style="margin-left: 1.25rem; color: var(--txt-gris); display: flex; flex-direction: column; gap: 0.5rem;">
+          <li>Explorador de países con fichas geográficas completas.</li>
+          <li>Consulta de clima y pronóstico meteorológico.</li>
+          <li>Sistema de gestión de destinos favoritos guardados en almacenamiento local.</li>
+          <li>Creación y administración de múltiples viajes e itinerarios interactivos día por día.</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="contenedor">
+      <div class="grid-footer">
+        <div>
+          <a href="#" class="logo" onclick="navegarA('inicio')">
+            <span class="logo-txt" style="color: var(--blanco);">Explora<span class="logo-go">Go</span></span>
+          </a>
+          <p style="margin-top: 0.75rem;">Tu plataforma confiable para descubrir el mundo y planificar cada paso de tu aventura.</p>
+        </div>
+        <div>
+          <h4>Navegación</h4>
+          <a onclick="navegarA('inicio')">Inicio</a>
+          <a onclick="navegarA('explorar')">Explorar</a>
+          <a onclick="navegarA('favoritos')">Favoritos</a>
+          <a onclick="navegarA('planificador')">Planificador</a>
+          <a onclick="navegarA('itinerarios')">Mis Itinerarios</a>
+        </div>
+        <div>
+          <h4>Contacto</h4>
+          <p>Email: soportes@explorago.com</p>
+          <p>Teléfono +57 300 000 000 0</p>
+        </div>
+      </div>
+      <div class="copy-footer">
+        &copy; 2026 exploraGO.
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
